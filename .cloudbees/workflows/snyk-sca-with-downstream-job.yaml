@@ -25,7 +25,7 @@ jobs:
         with:
           snyk-token: ${{ secrets.SNYK_TOKEN }}
           org-id: ${{ vars.SNYK_ORG_NAME }}
-          ref: test-snyk-sca
+
   job2:
     needs: job1
     steps:
