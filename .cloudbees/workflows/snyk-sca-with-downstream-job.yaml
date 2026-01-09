@@ -1,0 +1,42 @@
+name: snyk-sca-with-downstream-job
+kind: workflow
+apiVersion: automation.cloudbees.io/v1alpha1
+on:
+  workflow_dispatch:
+permissions:
+  scm-token-own: read
+  scm-token-org: read
+  id-token: write
+jobs:
+  job1:
+    outputs:
+      snyk-sca-job-output-critical: ${{ steps.snyk-sca-step.outputs.critical-count }}
+      snyk-sca-job-output-very-high: ${{ steps.snyk-sca-step.outputs.very-high-count }}
+      snyk-sca-job-output-high: ${{ steps.snyk-sca-step.outputs.high-count }}
+      snyk-sca-job-output-medium: ${{ steps.snyk-sca-step.outputs.medium-count }}
+      snyk-sca-job-output-low: ${{ steps.snyk-sca-step.outputs.low-count }}
+    steps:
+      - name: Check Out Source Code
+        uses: cloudbees-io/checkout@v1
+
+      - id: snyk-sca-step
+        name: Snyk SCA Scan
+        uses: cloudbees-io/snyk-sca-plugin@v1
+        with:
+          snyk-token: ${{ secrets.SNYK_TOKEN }}
+          org-id: ${{ vars.SNYK_ORG_NAME }}
+          ref: test-snyk-sca
+  job2:
+    needs: job1
+    steps:
+      - id: print-outputs-from-job1
+        name: Print Outputs From Upstream Job1
+        uses: docker://alpine:latest
+        run: |
+          # Printing all outputs
+          echo "Outputs from upstream Snyk SCA job:"
+          echo "Critical count: ${{ needs.job1.outputs.snyk-sca-job-output-critical }}"
+          echo "Very high count: ${{ needs.job1.outputs.snyk-sca-job-output-very-high }}"
+          echo "High count: ${{ needs.job1.outputs.snyk-sca-job-output-high }}"
+          echo "Medium count: ${{ needs.job1.outputs.snyk-sca-job-output-medium }}"
+          echo "Low count: ${{ needs.job1.outputs.snyk-sca-job-output-low }}"
